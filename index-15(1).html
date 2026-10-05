@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="si" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nuwan Predictor</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FF8S6631KB"></script>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','G-FF8S6631KB');
+function gev(n){gtag('event',n);}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f0f19;color:#fff;font-family:'Segoe UI',Tahoma,Arial,sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent;direction:ltr}
+
+.loader{position:fixed;inset:0;background:#0f0f19;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.loader.hide{display:none}
+.loader-icon{font-size:40px;margin-bottom:16px;animation:pls 1s infinite}
+@keyframes pls{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.loader-text{font-size:14px;color:#7a7a95;margin-bottom:12px}
+.loader-bw{width:200px;height:6px;background:#1a1a30;border-radius:3px;overflow:hidden}
+.loader-b{height:100%;background:linear-gradient(90deg,#4caf50,#2e7d32);width:0%;border-radius:3px;transition:width .3s}
+.loader-s{font-size:12px;color:#4caf50;margin-top:10px;opacity:0;transition:opacity .3s}
+.loader-s.show{opacity:1}
+
+.top{background:#17172a;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #252540}
+.top-r{display:flex;align-items:center;gap:6px}
+.top-ic{width:26px;height:26px;background:#e5382d;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}
+.top-nm{font-weight:700;font-size:13px}
+.top-l{display:flex;align-items:center;gap:5px;font-size:11px;color:#7a7a95}
+.dot{width:5px;height:5px;background:#4caf50;border-radius:50%;animation:bl 2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+
+.st{background:#111120;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1a1a30}
+.st-ok{display:flex;align-items:center;gap:6px;font-size:12px;color:#4caf50;font-weight:600}
+.st-dot{width:8px;height:8px;background:#4caf50;border-radius:50%;animation:bl 2s infinite}
+.st-u{font-size:11px;color:#7a7a95}
+
+.games{display:flex;justify-content:center;gap:6px;padding:8px 6px;background:#0f0f19}
+.gi{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border-radius:8px;background:#17172a;border:1px solid #252540;flex:1;max-width:80px;cursor:pointer;transition:all .2s}
+.gi.on{border-color:#e5382d;background:#1a1a2e}
+.gi .ic{font-size:20px}
+.gi .nm{font-size:9px;color:#7a7a95;font-weight:600;text-align:center}
+.gi.on .nm{color:#fff}
+
+/* GAME AREAS */
+.gw{position:relative;width:100%;height:42vw;max-height:240px;background:#0f0f19;overflow:hidden}
+.gw canvas{position:relative;z-index:2;width:100%;height:100%;display:block}
+.rays{position:absolute;inset:0;z-index:1;background:repeating-conic-gradient(from 0deg at 50% 100%,rgba(255,255,255,.015) 0deg 3.5deg,transparent 3.5deg 7deg);pointer-events:none}
+.multi{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-size:42px;font-weight:900;z-index:5;pointer-events:none;display:none;text-shadow:0 2px 14px rgba(0,0,0,.6);color:#fff;direction:ltr}
+.multi.show{display:block}
+.glabel{position:absolute;top:8px;right:8px;z-index:5;font-size:11px;color:#7a7a95;font-weight:600;background:rgba(15,15,25,.7);padding:3px 8px;border-radius:6px}
+
+/* Non-canvas game containers */
+.game-static{position:absolute;inset:0;z-index:3;display:none;padding:8px}
+.game-static.show{display:block}
+
+/* Mines grid */
+.mines-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;height:100%;padding:4px}
+.mine-cell{background:#1a1a35;border:1px solid #2a2a50;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .2s}
+.mine-cell:active{transform:scale(.95)}
+.mine-cell.gem{background:#1a2a1a;border-color:#4caf50}
+
+/* Penalty */
+.penalty-wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.goal{position:relative;width:80%;max-width:280px;aspect-ratio:2.2/1;border:3px solid #fff;border-bottom:none;border-radius:4px 4px 0 0;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr}
+.goal-zone{border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-size:10px;color:rgba(255,255,255,.15)}
+.goal-zone:hover{background:rgba(76,175,80,.15)}
+.goal-line{width:80%;max-width:280px;height:3px;background:#fff}
+.keeper{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:36px}
+.penalty-ball{font-size:28px;margin-top:12px}
+
+/* Apple grid */
+.apple-wrap{display:flex;flex-direction:column;gap:3px;height:100%;padding:4px}
+.apple-row{display:flex;gap:3px;flex:1}
+.apple-cell{flex:1;background:#1a2a1a;border:1px solid #2e4a2e;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .2s}
+.apple-cell:active{transform:scale(.95)}
+.apple-row-label{position:absolute;left:2px;font-size:8px;color:#3a5a3a;font-weight:700}
+.apple-multiplier{font-size:8px;color:#4caf50;text-align:center;margin-top:1px}
+
+.frozen-ov{position:absolute;inset:0;background:rgba(15,15,25,.6);z-index:6;display:none;pointer-events:none}
+.frozen-ov.show{display:block}
+.frozen-warn{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:7;font-size:12px;color:#e5382d;font-weight:700;display:none;white-space:nowrap;animation:blt 1s infinite}
+.frozen-warn.show{display:block}
+@keyframes blt{0%,100%{opacity:1}50%{opacity:.4}}
+
+.sig{padding:8px 10px;text-align:center}
+.sig-timer{font-size:11px;color:#ffc107;margin-bottom:6px;display:none}
+.sig-timer.show{display:block}
+.btn-sig{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;border:none;padding:12px 20px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;width:100%;max-width:300px;transition:transform .15s;animation:btnG 2s ease-in-out infinite}
+@keyframes btnG{0%,100%{box-shadow:0 0 6px rgba(76,175,80,.2)}50%{box-shadow:0 0 18px rgba(76,175,80,.5)}}
+.btn-sig:active{transform:scale(.96)}
+.btn-sig:disabled{background:#2a2a40;color:#555;cursor:default;animation:none}
+.btn-sig.frozen{background:linear-gradient(135deg,#555,#333);animation:none}
+
+.feed{background:#111120;border-top:1px solid #1a1a30;padding:6px 0;overflow:hidden}
+.fi{padding:4px 12px;font-size:11px;color:#aaa;display:flex;align-items:center;gap:6px;animation:fiIn .4s ease}
+@keyframes fiIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.fi .fa{color:#4caf50;font-weight:700;direction:ltr}
+.fi .ft{color:#555;font-size:10px;margin-right:auto;direction:ltr}
+
+.pop-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+.pop-bg.show{display:flex}
+.pop{background:#17172a;border:1px solid #2e2e50;border-radius:14px;padding:18px 14px;width:100%;max-width:340px;text-align:center;position:relative;animation:popI .3s ease}
+@keyframes popI{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.pop-x{position:absolute;top:10px;left:10px;width:28px;height:28px;background:#252540;border:none;color:#7a7a95;font-size:16px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pop-t{font-size:16px;font-weight:900;color:#e5382d;margin-bottom:6px}
+.pop-d{font-size:12px;color:#aaa;margin-bottom:14px;line-height:1.5}
+.tiers{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.tier{background:#111120;border:1px solid #252540;border-radius:10px;padding:10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s}
+.tier.sel{border-color:#4caf50;background:#1a2a1a}
+.tier-r{text-align:right}.tier-a{font-size:16px;font-weight:900;color:#fff;direction:ltr}
+.tier-l2{font-size:10px;color:#7a7a95;margin-top:1px}
+.tier-lf{text-align:left;direction:ltr}
+.tier-b{font-size:12px;font-weight:700;color:#4caf50}
+.tier-tt{font-size:10px;color:#7a7a95}
+.tier-badge{display:inline-block;font-size:9px;background:#ff9800;color:#fff;padding:1px 6px;border-radius:4px;font-weight:700;margin-bottom:2px}
+.tier-badge.vip{background:#7b1fa2}
+.btn-dep{display:block;text-decoration:none;background:linear-gradient(135deg,#e5382d,#b71c1c);color:#fff;border:none;padding:14px 20px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;width:100%;text-align:center;animation:grd 1.5s ease-in-out infinite}
+@keyframes grd{0%,100%{box-shadow:0 0 8px rgba(229,56,45,.25)}50%{box-shadow:0 0 22px rgba(229,56,45,.55)}}
+.p2n{font-size:14px;color:#ffc107;font-weight:700;margin-bottom:4px;transition:opacity .3s}
+.p2a{font-size:32px;font-weight:900;color:#4caf50;margin:6px 0;direction:ltr;transition:opacity .3s}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-icon">📡</div>
+  <div class="loader-text" id="lTxt">Nuwan වැඩසටහන සම්බන්ධ කරනවා...</div>
+  <div class="loader-bw"><div class="loader-b" id="lBar"></div></div>
+  <div class="loader-s" id="lSts">✅ ගිණුම සාර්ථකව සම්බන්ධ විය</div>
+</div>
+
+<div class="top">
+  <div class="top-r"><div class="top-ic">▶</div><div class="top-nm">Nuwan</div></div>
+  <div class="top-l"><div class="dot"></div><span id="oc">1,247 online</span></div>
+</div>
+
+<div class="st">
+  <div class="st-ok"><div class="st-dot"></div>✅ ගිණුම සම්බන්ධයි</div>
+  <div class="st-u">🎮 <span id="pc">847</span> දැන් ක්‍රීඩා කරනවා</div>
+</div>
+
+<div class="games">
+  <div class="gi on" onclick="pick(0)"><div class="ic">🎮</div><div class="nm">Aviator</div></div>
+  <div class="gi" onclick="pick(1)"><div class="ic">💣</div><div class="nm">Mines</div></div>
+  <div class="gi" onclick="pick(2)"><div class="ic">🥅</div><div class="nm">Penalty</div></div>
+  <div class="gi" onclick="pick(3)"><div class="ic">🍎</div><div class="nm">Apple</div></div>
+</div>
+
+<div class="gw" id="gw">
+  <div class="rays" id="raysEl"></div>
+  <canvas id="gc"></canvas>
+  <div class="glabel" id="gL">🎮 Aviator</div>
+  <div class="multi" id="md"></div>
+
+  <!-- MINES STATIC -->
+  <div class="game-static" id="gsm">
+    <div class="mines-grid" id="mGrid"></div>
+  </div>
+
+  <!-- PENALTY STATIC -->
+  <div class="game-static" id="gsp">
+    <div class="penalty-wrap">
+      <div class="goal" id="goalGrid"></div>
+      <div class="goal-line"></div>
+      <div class="keeper">🧤</div>
+      <div class="penalty-ball">⚽</div>
+    </div>
+  </div>
+
+  <!-- APPLE STATIC -->
+  <div class="game-static" id="gsa">
+    <div class="apple-wrap" id="appleGrid"></div>
+  </div>
+
+  <div class="frozen-ov" id="fOv"></div>
+  <div class="frozen-warn" id="fWarn">⚠️ ශේෂය ශූන්‍යයි — සංඥාව බලාපොරොත්තු වෙනවා</div>
+</div>
+
+<div class="sig">
+  <div class="sig-timer" id="sTimer">⏳ සංඥාව අවසන් වීමට <span id="tVal">5:00</span> ඉතිරියි</div>
+  <button class="btn-sig" id="bSig" onclick="getSignal()">🔍 දැන්ම සංඥාව ලබා ගන්න</button>
+</div>
+
+<div class="feed" id="feed"></div>
+
+<!-- POP 1 -->
+<div class="pop-bg" id="p1"><div class="pop">
+  <button class="pop-x" onclick="closeP1()">✕</button>
+  <div class="pop-t">⚠️ ශේෂය ශූන්‍යයි</div>
+  <div class="pop-d">සංඥා අගුළු ඇරීමට ඔබේ ගිණුමට මුදල් යොදවන්න 👇</div>
+  <div class="tiers">
+    <div class="tier" onclick="selT(this)"><div class="tier-r"><div class="tier-a">1,200 LKR</div><div class="tier-l2">මූලික ප්‍රවේශය</div></div><div class="tier-lf"><div class="tier-b">✅ සංඥා</div></div></div>
+    <div class="tier sel" onclick="selT(this)"><div class="tier-r"><div class="tier-badge">🔥 වඩාත් ජනප්‍රිය</div><div class="tier-a">2,000 LKR</div><div class="tier-l2">+150% බෝනස්</div></div><div class="tier-lf"><div class="tier-b">= 5,000 LKR</div><div class="tier-tt">2,000 + 3,000 බෝනස්</div></div></div>
+    <div class="tier" onclick="selT(this)"><div class="tier-r"><div class="tier-badge vip">👑 VIP</div><div class="tier-a">4,000 LKR</div><div class="tier-l2">+100% බෝනස්</div></div><div class="tier-lf"><div class="tier-b">= 8,000 LKR</div><div class="tier-tt">4,000 + 4,000 බෝනස්</div></div></div>
+  </div>
+  <a href="https://reffpa.com/L?tag=d_5878320m_97c_&site=5878320&ad=97" target="_blank" class="btn-dep" onclick="gev('deposit_click')">💰 දැන්ම යොදවා ජයගන්න</a>
+</div></div>
+
+<!-- POP 2 -->
+<div class="pop-bg" id="p2"><div class="pop">
+  <button class="pop-x" onclick="closeP2()">✕</button>
+  <div class="pop-t">🔥 කෙනෙක් දැන් දිනුවා!</div>
+  <div class="p2n" id="p2N">🇱🇰 Kamal</div>
+  <div class="p2a" id="p2A">+18,450 LKR</div>
+  <div class="pop-d">ඔබත් 1,200 LKR යොදවා දැන්ම ආරම්භ කරන්න 👇</div>
+  <a href="https://reffpa.com/L?tag=d_5878320m_97c_&site=5878320&ad=97" target="_blank" class="btn-dep" onclick="gev('deposit_click')">💰 දැන්ම ආරම්භ කරන්න</a>
+</div></div>
+
+<!-- POP 3 -->
+<div class="pop-bg" id="p3"><div class="pop">
+  <button class="pop-x" onclick="closeP3()">✕</button>
+  <div class="pop-t">⏳ අවසාන අවස්ථාව!</div>
+  <div class="pop-d" style="font-size:14px;color:#fff;font-weight:700">සංඥාව දැන් ඉවර වෙනවා<br>අද ඔබේ අවසාන අවස්ථාව 🙏</div>
+  <div style="margin:12px 0"><div class="tier sel" style="justify-content:center;cursor:default"><div style="text-align:center"><div class="tier-badge">🔥 වඩාත් ජනප්‍රිය</div><div class="tier-a">2,000 LKR = 5,000 LKR</div></div></div></div>
+  <a href="https://reffpa.com/L?tag=d_5878320m_97c_&site=5878320&ad=97" target="_blank" class="btn-dep" onclick="gev('deposit_click')">🙏 කාලය ඉකුත් වීමට පෙර යොදවන්න</a>
+</div></div>
+
+<script>
+const NAMES=['Kamal','Saman','Nimal','Chaminda','Ruwan','Lasith','Dinesh','Pradeep','Sajith','Nuwan','Kasun','Dilan','Thilina','Buddhika','Asanka','Madush','Chathura','Supun','Ishan','Tharindu'];
+const GNAMES=['Aviator','Mines','Penalty','Apple'];
+const GICONS=['🎮','💣','🥅','🍎'];
+let curG=0,phase='idle',pred=0,freezeAt=0,t0=0,cur=1;
+const cvs=document.getElementById('gc'),c=cvs.getContext('2d');
+
+// ===== LOADER =====
+(function(){
+  const bar=document.getElementById('lBar'),txt=document.getElementById('lTxt'),sts=document.getElementById('lSts');
+  let p=0;const msgs=['Nuwan වැඩසටහන සම්බන්ධ කරනවා...','ගිණුම සත්‍යාපනය කරනවා...','සංඥා පූරණය කරනවා...'];let mi=0;
+  const iv=setInterval(()=>{
+    p+=Math.random()*15+5;if(p>100)p=100;bar.style.width=p+'%';
+    if(p>33&&mi===0){mi=1;txt.textContent=msgs[1]}
+    if(p>66&&mi===1){mi=2;txt.textContent=msgs[2]}
+    if(p>=100){clearInterval(iv);sts.classList.add('show');setTimeout(()=>document.getElementById('loader').classList.add('hide'),1000);gev('page_view')}
+  },200);
+})();
+
+// ===== RESIZE =====
+function rsz(){const w=document.getElementById('gw');cvs.width=w.clientWidth*2;cvs.height=w.clientHeight*2;if(curG===0&&phase==='idle')drawGrid()}
+window.addEventListener('resize',rsz);rsz();
+
+// ===== BUILD STATIC GAMES =====
+function buildMines(){
+  const g=document.getElementById('mGrid');g.innerHTML='';
+  // 5x5 grid, some cells show gems as "hints"
+  const gems=[2,6,8,12,16,18,22];
+  for(let i=0;i<25;i++){
+    const d=document.createElement('div');d.className='mine-cell';
+    if(gems.includes(i)){d.classList.add('gem');d.textContent='💎'}
+    else{d.textContent='?'}
+    g.appendChild(d);
+  }
+}
+
+function buildPenalty(){
+  const g=document.getElementById('goalGrid');g.innerHTML='';
+  const labels=['↖','⬆','↗','←','🧤','→'];
+  for(let i=0;i<6;i++){
+    const d=document.createElement('div');d.className='goal-zone';
+    d.textContent=i===4?'':'⚡';
+    g.appendChild(d);
+  }
+}
+
+function buildApple(){
+  const g=document.getElementById('appleGrid');g.innerHTML='';
+  // 5 rows x 5 columns (show 5 visible rows)
+  const mults=['1.23x','1.58x','2.18x','3.26x','5.29x'];
+  for(let r=0;r<5;r++){
+    const row=document.createElement('div');row.className='apple-row';
+    for(let cl=0;cl<5;cl++){
+      const d=document.createElement('div');d.className='apple-cell';
+      d.textContent='🍎';
+      row.appendChild(d);
+    }
+    const ml=document.createElement('div');ml.className='apple-multiplier';
+    ml.textContent=mults[r];
+    row.appendChild(ml);
+    g.appendChild(row);
+  }
+}
+
+buildMines();buildPenalty();buildApple();
+
+// ===== PICK GAME =====
+function pick(i){
+  if(phase==='frozen')return;
+  curG=i;
+  document.querySelectorAll('.gi').forEach((g,j)=>g.classList.toggle('on',j===i));
+  document.getElementById('gL').textContent=GICONS[i]+' '+GNAMES[i];
+  // show/hide elements
+  cvs.style.display=i===0?'block':'none';
+  document.getElementById('raysEl').style.display=i===0?'block':'none';
+  document.getElementById('gsm').classList.toggle('show',i===1);
+  document.getElementById('gsp').classList.toggle('show',i===2);
+  document.getElementById('gsa').classList.toggle('show',i===3);
+  document.getElementById('md').className='multi';
+  // reset button if idle
+  if(phase==='idle'){
+    const btn=document.getElementById('bSig');
+    btn.disabled=false;btn.className='btn-sig';btn.textContent='🔍 جيب الإشارة دابا';
+  }
+  if(i===0)drawGrid();
+}
+
+// ===== DRAW GRID =====
+function drawGrid(){
+  const W=cvs.width,H=cvs.height;c.clearRect(0,0,W,H);
+  c.strokeStyle='rgba(255,255,255,0.04)';c.lineWidth=1;
+  for(let i=0;i<6;i++){let y=H*(i/6);c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke()}
+  for(let i=0;i<10;i++){let x=W*(i/10);c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke()}
+}
+
+// ===== SIGNAL =====
+function getSignal(){
+  if(phase!=='idle')return;
+  gev('signal_click');
+  const btn=document.getElementById('bSig');
+  btn.disabled=true;btn.textContent='⏳ كنحلل البيانات...';
+
+  if(curG===0){
+    // AVIATOR: full demo
+    pred=Math.round((Math.random()*3+2)*100)/100;
+    freezeAt=1+(pred-1)*(0.35+Math.random()*0.25);
+    freezeAt=Math.round(freezeAt*100)/100;
+    setTimeout(()=>{
+      btn.textContent='🎯 '+pred.toFixed(2)+'x — كتبدا...';
+      setTimeout(()=>flyAviator(),800);
+    },1200);
+  } else {
+    // MINES/PENALTY/APPLE: show interface, then popup
+    setTimeout(()=>{
+      showFreeze();
+    },1500);
+  }
+}
+
+// ===== AVIATOR FLIGHT =====
+function flyAviator(){
+  phase='fly';t0=performance.now();cur=1;
+  document.getElementById('md').className='multi show';
+  document.getElementById('md').style.color='#fff';
+  document.getElementById('bSig').textContent='✈️ الطيارة طايرة...';
+  gev('game_start');
+  requestAnimationFrame(tick);
+}
+
+function tick(ts){
+  const el=(ts-t0)/1000,tt=2+pred*0.5;
+  const p=Math.min(el/tt,1);
+  cur=1+(pred-1)*Math.pow(p,1.5);
+  if(cur>=freezeAt&&phase==='fly'){cur=freezeAt;showFreeze();return}
+  if(p>=1)cur=pred;
+  document.getElementById('md').textContent=cur.toFixed(2)+'x';
+  drawAviator(p);
+  if(p<1&&phase==='fly')requestAnimationFrame(tick);
+}
+
+function drawAviator(p){
+  const W=cvs.width,H=cvs.height;c.clearRect(0,0,W,H);drawGrid();
+  const pad=35,steps=Math.floor(p*150);
+  c.beginPath();c.moveTo(pad,H-pad);
+  for(let i=0;i<=steps;i++){const q=i/150;c.lineTo(pad+(W-pad*2)*q,H-pad-(H-pad*2)*Math.pow(q,1.5)*.85)}
+  const eX=pad+(W-pad*2)*p,eY=H-pad-(H-pad*2)*Math.pow(p,1.5)*.85;
+  c.lineTo(eX,H-pad);c.closePath();
+  const g=c.createLinearGradient(0,H,0,0);g.addColorStop(0,'rgba(229,56,45,0.1)');g.addColorStop(1,'rgba(229,56,45,0.01)');
+  c.fillStyle=g;c.fill();
+  c.beginPath();c.moveTo(pad,H-pad);
+  for(let i=0;i<=steps;i++){const q=i/150;c.lineTo(pad+(W-pad*2)*q,H-pad-(H-pad*2)*Math.pow(q,1.5)*.85)}
+  c.strokeStyle='#e5382d';c.lineWidth=3;c.lineCap='round';c.stroke();
+  c.save();
+  const a=-Math.atan(1.5*Math.pow(Math.max(p,0.01),0.5)*0.85*((H-70)/(W-70)));
+  c.translate(eX,eY);c.rotate(a);const s=1.8;
+  c.fillStyle='#e5382d';c.beginPath();c.ellipse(0,0,22*s,6*s,0,0,Math.PI*2);c.fill();
+  c.beginPath();c.moveTo(-4*s,0);c.lineTo(-10*s,-14*s);c.lineTo(6*s,-3*s);c.closePath();c.fill();
+  c.beginPath();c.moveTo(-18*s,0);c.lineTo(-24*s,-10*s);c.lineTo(-14*s,-2*s);c.closePath();c.fill();
+  c.beginPath();c.moveTo(-4*s,0);c.lineTo(-8*s,7*s);c.lineTo(2*s,2*s);c.closePath();c.fill();
+  c.fillStyle='rgba(255,255,255,0.25)';c.beginPath();c.ellipse(12*s,-1*s,5*s,3*s,0,0,Math.PI*2);c.fill();
+  c.restore();
+}
+
+// ===== FREEZE (shared for all games) =====
+function showFreeze(){
+  phase='frozen';gev('game_stop');
+  if(curG===0){
+    document.getElementById('md').textContent=freezeAt.toFixed(2)+'x';
+    document.getElementById('md').style.color='#e5382d';
+  }
+  document.getElementById('fOv').classList.add('show');
+  document.getElementById('fWarn').classList.add('show');
+  const btn=document.getElementById('bSig');
+  btn.className='btn-sig frozen';btn.textContent='🔒 ශේෂය ශූන්‍යයි';btn.disabled=true;
+  if(navigator.vibrate)navigator.vibrate([100,50,100]);
+  startTimer();startFeed();
+  setTimeout(()=>document.getElementById('p1').classList.add('show'),1000);
+}
+
+// ===== TIMER =====
+let tSec=300;
+function startTimer(){
+  document.getElementById('sTimer').classList.add('show');
+  setInterval(()=>{tSec--;if(tSec<0)tSec=0;const m=Math.floor(tSec/60),s=tSec%60;document.getElementById('tVal').textContent=m+':'+(s<10?'0':'')+s},1000);
+}
+
+// ===== POPUPS =====
+function closeP1(){document.getElementById('p1').classList.remove('show');gev('popup_close');showP2();}
+function closeP2(){document.getElementById('p2').classList.remove('show');gev('popup_close');clearInterval(p2iv);setTimeout(()=>document.getElementById('p3').classList.add('show'),60000)}
+function closeP3(){document.getElementById('p3').classList.remove('show');gev('popup_close')}
+
+let p2iv;
+function showP2(){
+  rotateP2();
+  document.getElementById('p2').classList.add('show');
+  p2iv=setInterval(rotateP2,4000);
+}
+function rotateP2(){
+  const n=NAMES[Math.floor(Math.random()*NAMES.length)];
+  const a=Math.floor(Math.random()*85000+4500+Math.random()*999);
+  const game=GNAMES[Math.floor(Math.random()*4)];
+  const el1=document.getElementById('p2N'),el2=document.getElementById('p2A');
+  el1.style.opacity='0';el2.style.opacity='0';
+  setTimeout(()=>{
+    el1.textContent='🇱🇰 '+n+' — '+game;
+    el2.textContent='+'+a.toLocaleString()+' LKR';
+    el1.style.opacity='1';el2.style.opacity='1';
+  },300);
+}
+
+function selT(el){document.querySelectorAll('.tier').forEach(t=>t.classList.remove('sel'));el.classList.add('sel')}
+
+// ===== FEED =====
+function rndAmt(){return Math.floor(Math.random()*85000+4500+Math.random()*999)}
+function rndTime(){return['දැන් තත්පරයකට පෙර','තත්පර 30කට පෙර','මිනිත්තුවකට පෙර','මිනිත්තු 2කට පෙර','මිනිත්තු 3කට පෙර'][Math.floor(Math.random()*5)]}
+function addFeed(){
+  const f=document.getElementById('feed'),d=document.createElement('div');d.className='fi';
+  const n=NAMES[Math.floor(Math.random()*NAMES.length)],a=rndAmt(),g=GNAMES[Math.floor(Math.random()*4)];
+  d.innerHTML='🇱🇰 '+n+' දිනුවා <span class="fa">'+a.toLocaleString()+' LKR</span> '+g+' හි <span class="ft">'+rndTime()+'</span>';
+  f.prepend(d);if(f.children.length>6)f.removeChild(f.lastChild);
+}
+function startFeed(){for(let i=0;i<3;i++)addFeed();setInterval(addFeed,4000)}
+
+// ===== ONLINE =====
+setInterval(()=>{
+  document.getElementById('oc').textContent=(1100+Math.floor(Math.random()*400)).toLocaleString()+' online';
+  document.getElementById('pc').textContent=(700+Math.floor(Math.random()*300));
+},8000);
+
+drawGrid();
+</script>
+</body>
+</html>
